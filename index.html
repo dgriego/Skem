@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#d8d0c3" />
+  <title>Skem</title>
+  <meta name="description" content="Skem, an interactive figure drawing study prototype" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">SKEM · PROTOTYPE 01</div>
+        <h1>Learn the figure by <em>seeing through it.</em></h1>
+      </div>
+      <div class="header-chip"><span class="dot"></span> Study session</div>
+    </header>
+
+    <section class="workspace">
+      <aside class="left-panel panel">
+        <div class="panel-label">01 · CHOOSE A POSE</div>
+        <div id="pose-list" class="pose-list"></div>
+        <div class="note-card">
+          <span class="note-number">INSTRUCTOR NOTE</span>
+          <p id="instructor-note"></p>
+        </div>
+        <div class="panel-label second">02 · VIEW ANGLE</div>
+        <div id="angle-grid" class="angle-grid"></div>
+      </aside>
+
+      <section class="stage-wrap">
+        <div class="stage-meta">
+          <div><span id="pose-title"></span><small id="angle-title"></small></div>
+          <div class="mode-pill" id="mode-kicker"></div>
+        </div>
+        <div class="stage-card">
+          <div id="figure-stage" class="figure-stage"></div>
+          <div class="stage-caption"><b id="mode-title"></b><span id="mode-desc"></span></div>
+        </div>
+        <div class="angle-strip">
+          <button id="rotate-left">← Rotate</button>
+          <div id="angle-dots"></div>
+          <button id="rotate-right">Rotate →</button>
+        </div>
+      </section>
+
+      <aside class="right-panel panel">
+        <div class="panel-label">03 · DRAWING PHASE</div>
+        <div id="mode-list" class="mode-list"></div>
+        <label class="toggle-row">
+          <div><b>Reference ghost</b><small>Keep the finished pose faintly visible</small></div>
+          <input id="overlay-toggle" type="checkbox" checked />
+          <span class="toggle"></span>
+        </label>
+        <div class="study-flow">
+          <span class="panel-label">SUGGESTED STUDY</span>
+          <ol>
+            <li><b>30 sec</b> Find the action</li>
+            <li><b>2 min</b> Build volumes</li>
+            <li><b>5 min</b> Connect masses</li>
+            <li><b>10 min</b> Draw from reference</li>
+          </ol>
+        </div>
+      </aside>
+    </section>
+
+    <footer>
+      <span>Prototype focus: pose × angle × construction method</span>
+      <span>Next: true 3D rotation · anatomy layers · custom poses · timed sessions</span>
+    </footer>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
