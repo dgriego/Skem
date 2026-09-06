@@ -4,73 +4,122 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#d8d0c3" />
-  <title>Skem</title>
-  <meta name="description" content="Skem, an interactive figure drawing study prototype" />
+  <title>Skem - 3D Anatomy Prototype</title>
+  <meta name="description" content="Skem is an interactive 3D figure drawing study tool." />
   <link rel="stylesheet" href="/styles.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+      }
+    }
+  </script>
 </head>
 <body>
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">SKEM · PROTOTYPE 01</div>
-        <h1>Learn the figure by <em>seeing through it.</em></h1>
+        <div class="eyebrow">SKEM · ANATOMY PROTOTYPE 02</div>
+        <h1>Build the figure <em>from the inside out.</em></h1>
       </div>
-      <div class="header-chip"><span class="dot"></span> Study session</div>
+      <div class="header-chip"><span class="dot"></span> Free 3D orbit</div>
     </header>
 
     <section class="workspace">
-      <aside class="left-panel panel">
+      <aside class="panel left-panel">
         <div class="panel-label">01 · CHOOSE A POSE</div>
         <div id="pose-list" class="pose-list"></div>
+
         <div class="note-card">
-          <span class="note-number">INSTRUCTOR NOTE</span>
+          <span class="note-number">STRUCTURAL NOTE</span>
           <p id="instructor-note"></p>
         </div>
-        <div class="panel-label second">02 · VIEW ANGLE</div>
-        <div id="angle-grid" class="angle-grid"></div>
+
+        <div class="panel-label second">02 · CAMERA PRESETS</div>
+        <div class="view-grid">
+          <button data-view="front">Front</button>
+          <button data-view="three">3/4</button>
+          <button data-view="side">Side</button>
+          <button data-view="back">Back</button>
+        </div>
+        <p class="microcopy">Drag the figure to orbit freely. Scroll to zoom.</p>
       </aside>
 
       <section class="stage-wrap">
         <div class="stage-meta">
-          <div><span id="pose-title"></span><small id="angle-title"></small></div>
-          <div class="mode-pill" id="mode-kicker"></div>
+          <div>
+            <span id="pose-title">Contrapposto</span>
+            <small id="pose-subtitle">same rig · any angle</small>
+          </div>
+          <div class="mode-pill" id="mode-kicker">Reference</div>
         </div>
+
         <div class="stage-card">
-          <div id="figure-stage" class="figure-stage"></div>
-          <div class="stage-caption"><b id="mode-title"></b><span id="mode-desc"></span></div>
+          <div id="three-stage" class="three-stage" aria-label="Interactive 3D figure study"></div>
+          <div class="stage-hud top-left">
+            <span class="hud-label">MODEL</span>
+            <strong>8-head study proportion</strong>
+            <small>construction anatomy pass 01</small>
+          </div>
+          <div class="stage-hud bottom-left">
+            <span class="hud-label">CURRENT LAYER</span>
+            <strong id="hud-mode">Reference</strong>
+            <small id="hud-desc">Surface volumes built from the same articulated rig.</small>
+          </div>
+          <div class="stage-hud bottom-right anatomy-warning">
+            <span class="hud-label">ACCURACY STATUS</span>
+            <strong>Study prototype</strong>
+            <small>proportions and landmarks are being refined before anatomy validation</small>
+          </div>
         </div>
-        <div class="angle-strip">
-          <button id="rotate-left">← Rotate</button>
-          <div id="angle-dots"></div>
-          <button id="rotate-right">Rotate →</button>
+
+        <div class="orbit-strip">
+          <span>drag to orbit</span>
+          <span class="separator">·</span>
+          <span>scroll to zoom</span>
+          <span class="separator">·</span>
+          <button id="reset-camera">reset camera</button>
         </div>
       </section>
 
-      <aside class="right-panel panel">
-        <div class="panel-label">03 · DRAWING PHASE</div>
+      <aside class="panel right-panel">
+        <div class="panel-label">03 · LEARNING LAYER</div>
         <div id="mode-list" class="mode-list"></div>
+
         <label class="toggle-row">
-          <div><b>Reference ghost</b><small>Keep the finished pose faintly visible</small></div>
+          <div>
+            <b>Reference ghost</b>
+            <small>Keep the surface faintly visible under construction layers</small>
+          </div>
           <input id="overlay-toggle" type="checkbox" checked />
           <span class="toggle"></span>
         </label>
+
+        <div class="build-panel">
+          <div class="build-head">
+            <span class="panel-label">CONSTRUCTION REVEAL</span>
+            <span id="build-stage-label">Stage 3 of 5</span>
+          </div>
+          <input id="build-stage" type="range" min="1" max="5" value="3" step="1" />
+          <div class="build-steps">
+            <span>gesture</span><span>masses</span><span>limbs</span><span>planes</span><span>landmarks</span>
+          </div>
+        </div>
+
         <div class="study-flow">
-          <span class="panel-label">SUGGESTED STUDY</span>
-          <ol>
-            <li><b>30 sec</b> Find the action</li>
-            <li><b>2 min</b> Build volumes</li>
-            <li><b>5 min</b> Connect masses</li>
-            <li><b>10 min</b> Draw from reference</li>
-          </ol>
+          <span class="panel-label">WHAT TO LOOK FOR</span>
+          <ol id="study-points"></ol>
         </div>
       </aside>
     </section>
 
     <footer>
-      <span>Prototype focus: pose × angle × construction method</span>
-      <span>Next: true 3D rotation · anatomy layers · custom poses · timed sessions</span>
+      <span>Same pose, same rig, different teaching abstractions</span>
+      <span>Next: validated surface anatomy · muscles · custom posing</span>
     </footer>
   </main>
-  <script src="/app.js"></script>
+
+  <script type="module" src="/app.js"></script>
 </body>
 </html>
