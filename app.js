@@ -1,47 +1,108 @@
-const POSES={
-contrapposto:{label:'Contrapposto',note:'Weight on one leg. Look for the opposing shoulder and pelvis tilts.',joints:{head:[50,12],neck:[50,20],shoulderL:[39,24],shoulderR:[61,22],elbowL:[32,38],elbowR:[68,35],wristL:[30,52],wristR:[72,48],chest:[50,34],pelvis:[51,53],hipL:[44,55],hipR:[58,52],kneeL:[43,72],kneeR:[62,70],ankleL:[39,91],ankleR:[64,91]}},
-reach:{label:'Reach',note:'Follow the long action from planted foot through the reaching hand.',joints:{head:[48,13],neck:[49,21],shoulderL:[38,25],shoulderR:[59,22],elbowL:[30,37],elbowR:[69,15],wristL:[26,49],wristR:[77,8],chest:[49,35],pelvis:[52,54],hipL:[45,55],hipR:[59,53],kneeL:[40,72],kneeR:[65,68],ankleL:[35,91],ankleR:[70,88]}},
-crouch:{label:'Crouch',note:'Compress the torso and compare the angles of thigh, shin, and spine.',joints:{head:[49,17],neck:[49,25],shoulderL:[38,28],shoulderR:[60,27],elbowL:[31,41],elbowR:[68,39],wristL:[35,52],wristR:[63,52],chest:[49,39],pelvis:[52,57],hipL:[44,58],hipR:[60,57],kneeL:[33,69],kneeR:[70,69],ankleL:[43,88],ankleR:[62,89]}},
-stride:{label:'Stride',note:'Use the center line and opposing limbs to capture forward rhythm.',joints:{head:[50,12],neck:[50,20],shoulderL:[39,23],shoulderR:[61,24],elbowL:[31,36],elbowR:[69,38],wristL:[27,49],wristR:[66,51],chest:[50,34],pelvis:[50,52],hipL:[43,53],hipR:[58,53],kneeL:[34,69],kneeR:[64,70],ankleL:[27,88],ankleR:[73,89]}}
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const stage = document.querySelector('#three-stage');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xeee7db);
+
+const camera = new THREE.PerspectiveCamera(32, 1, 0.01, 20);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+stage.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.minDistance = 1.1;
+controls.maxDistance = 5;
+controls.target.set(0, .92, 0);
+
+scene.add(new THREE.HemisphereLight(0xfffbf3, 0x81796d, 2.0));
+const key = new THREE.DirectionalLight(0xffffff, 2.1); key.position.set(2.5,4,3); scene.add(key);
+const fill = new THREE.DirectionalLight(0xe9e3d8, .9); fill.position.set(-3,2,-2); scene.add(fill);
+
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(5,5),
+  new THREE.MeshStandardMaterial({color:0xd8cfc1,roughness:1})
+);
+floor.rotation.x = -Math.PI/2; floor.position.y = .002; scene.add(floor);
+
+let body = null;
+let displayMode = 'clay';
+const clay = new THREE.MeshStandardMaterial({color:0x9b958b,roughness:.92,metalness:0});
+const silhouette = new THREE.MeshBasicMaterial({color:0x272721});
+const wire = new THREE.MeshBasicMaterial({color:0x403d37,wireframe:true});
+
+const loading = document.createElement('div'); loading.className='loading'; loading.textContent='Loading male base'; stage.appendChild(loading);
+
+new GLTFLoader().load('/assets/simple-male.glb', gltf => {
+  body = gltf.scene;
+  body.traverse(o => {
+    if (o.isMesh) {
+      o.geometry.computeVertexNormals();
+      o.material = clay;
+    }
+  });
+  scene.add(body);
+  loading.remove();
+  frameBody();
+}, undefined, err => {
+  loading.textContent='Model failed to load';
+  console.error(err);
+});
+
+function frameBody(){
+  if(!body) return;
+  const box = new THREE.Box3().setFromObject(body);
+  const center = box.getCenter(new THREE.Vector3());
+  controls.target.set(center.x, .92, center.z);
+  setView('three');
+}
+
+const views = {
+  front:[0,.95,3.15],
+  three:[2.35,1.1,2.55],
+  side:[3.2,.95,0],
+  back:[0,.95,-3.15]
 };
-const ANGLES=[{id:'front',label:'Front',sx:1,lean:0},{id:'three',label:'3/4',sx:.78,lean:2.5},{id:'side',label:'Side',sx:.42,lean:4}];
-const MODES=[{id:'pose',label:'Pose',kicker:'Observation',desc:'Clean figure silhouette, like a life-drawing reference.'},{id:'structure',label:'Structure',kicker:'Instructor build-up',desc:'Gesture, centerline, rib cage, pelvis, joints, and limb cylinders.'},{id:'animator',label:'Animator',kicker:'Character construction',desc:'Line of action, simplified volumes, squash/stretch, and directional cross-contours.'},{id:'bridgman',label:'Mass & Wedge',kicker:'Bridgman-inspired',desc:'Interlocking blocky masses emphasizing compression, opposition, and planar direction.'}];
-let state={poseId:'contrapposto',angleId:'three',mode:'pose',overlay:true};
-const armPairs=[['shoulderL','elbowL'],['elbowL','wristL'],['shoulderR','elbowR'],['elbowR','wristR']];
-const legPairs=[['hipL','kneeL'],['kneeL','ankleL'],['hipR','kneeR'],['kneeR','ankleR']];
-const skeletonPairs=[['neck','chest'],['chest','pelvis'],...armPairs,...legPairs,['shoulderL','shoulderR'],['hipL','hipR']];
-const tPoint=(p,a)=>[50+(p[0]-50)*a.sx+a.lean*((p[1]-50)/50),p[1]];
-const line=(a,b,cls)=>`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" class="${cls}"/>`;
-function limb(a,b,w,cls){const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy),ang=Math.atan2(dy,dx)*180/Math.PI;return `<rect x="${a[0]}" y="${a[1]-w/2}" width="${len}" height="${w}" rx="${w/2}" transform="rotate(${ang} ${a[0]} ${a[1]})" class="${cls}"/>`}
-const poly=(pts,cls)=>`<polygon points="${pts.map(p=>p.join(',')).join(' ')}" class="${cls}"/>`;
-function figureSvg(pose,angle,mode,overlay,mini=false){
- const j=Object.fromEntries(Object.entries(pose.joints).map(([k,v])=>[k,tPoint(v,angle)]));
- const base=`<g class="base-figure"><ellipse cx="${j.head[0]}" cy="${j.head[1]}" rx="${5.5*angle.sx+.8}" ry="7.2" class="skin-fill"/><path d="M ${j.neck[0]-4*angle.sx} ${j.neck[1]} Q ${j.shoulderL[0]} ${j.shoulderL[1]} ${j.chest[0]-7*angle.sx} ${j.chest[1]+11} Q ${j.pelvis[0]} ${j.pelvis[1]-3} ${j.chest[0]+7*angle.sx} ${j.chest[1]+11} Q ${j.shoulderR[0]} ${j.shoulderR[1]} ${j.neck[0]+4*angle.sx} ${j.neck[1]} Z" class="skin-fill torso"/>${armPairs.map(([a,b])=>limb(j[a],j[b],6.2,'skin-fill')).join('')}${legPairs.map(([a,b])=>limb(j[a],j[b],7.5,'skin-fill')).join('')}<circle cx="${j.wristL[0]}" cy="${j.wristL[1]}" r="3.5" class="skin-fill"/><circle cx="${j.wristR[0]}" cy="${j.wristR[1]}" r="3.5" class="skin-fill"/><ellipse cx="${j.ankleL[0]}" cy="${j.ankleL[1]+2}" rx="5" ry="2.5" class="skin-fill"/><ellipse cx="${j.ankleR[0]}" cy="${j.ankleR[1]+2}" rx="5" ry="2.5" class="skin-fill"/></g>`;
- const gesture=`<g class="gesture-layer"><path d="M ${j.head[0]} ${j.head[1]-5} Q ${j.chest[0]-4} ${j.chest[1]} ${j.pelvis[0]} ${j.pelvis[1]} Q ${(j.kneeR[0]+j.pelvis[0])/2} ${(j.kneeR[1]+j.pelvis[1])/2} ${j.ankleR[0]} ${j.ankleR[1]}" class="action-line"/>${skeletonPairs.map(([a,b])=>line(j[a],j[b],'construction-line')).join('')}${Object.entries(j).filter(([k])=>/shoulder|elbow|wrist|hip|knee|ankle/.test(k)).map(([k,p])=>`<circle cx="${p[0]}" cy="${p[1]}" r="1.9" class="joint"/>`).join('')}</g>`;
- const structure=`<g class="structure-layer"><ellipse cx="${j.chest[0]}" cy="${j.chest[1]}" rx="${10*angle.sx+1.5}" ry="13" transform="rotate(-5 ${j.chest[0]} ${j.chest[1]})" class="volume"/><path d="M ${j.pelvis[0]-9*angle.sx} ${j.pelvis[1]-5} L ${j.pelvis[0]+8*angle.sx} ${j.pelvis[1]-5} L ${j.pelvis[0]+6*angle.sx} ${j.pelvis[1]+7} L ${j.pelvis[0]-7*angle.sx} ${j.pelvis[1]+7} Z" class="volume"/><ellipse cx="${j.head[0]}" cy="${j.head[1]}" rx="${5.7*angle.sx+1}" ry="7.4" class="volume"/>${[...armPairs,...legPairs].map(([a,b])=>limb(j[a],j[b],4.8,'volume limb-volume')).join('')}<path d="M ${j.head[0]} ${j.head[1]-7} L ${j.head[0]} ${j.head[1]+7}" class="cross"/><path d="M ${j.chest[0]-9*angle.sx} ${j.chest[1]} Q ${j.chest[0]} ${j.chest[1]+4} ${j.chest[0]+9*angle.sx} ${j.chest[1]}" class="cross"/></g>`;
- const animator=`<g class="animator-layer"><ellipse cx="${j.head[0]}" cy="${j.head[1]}" rx="${6.2*angle.sx+1}" ry="7.8" class="anim-shape"/><ellipse cx="${j.chest[0]}" cy="${j.chest[1]}" rx="${11*angle.sx+1}" ry="13.5" class="anim-shape"/><ellipse cx="${j.pelvis[0]}" cy="${j.pelvis[1]}" rx="${9*angle.sx+1}" ry="7.5" class="anim-shape"/>${[...armPairs,...legPairs].map(([a,b])=>limb(j[a],j[b],5.2,'anim-shape')).join('')}<path d="M ${j.head[0]} ${j.head[1]-8} Q ${j.chest[0]-8} ${j.chest[1]} ${j.pelvis[0]} ${j.pelvis[1]+3} Q ${j.kneeL[0]} ${j.kneeL[1]} ${j.ankleL[0]} ${j.ankleL[1]}" class="anim-action"/><path d="M ${j.shoulderL[0]} ${j.shoulderL[1]} Q ${j.chest[0]} ${j.chest[1]-4} ${j.shoulderR[0]} ${j.shoulderR[1]}" class="cross strong"/><path d="M ${j.hipL[0]} ${j.hipL[1]} Q ${j.pelvis[0]} ${j.pelvis[1]+4} ${j.hipR[0]} ${j.hipR[1]}" class="cross strong"/></g>`;
- const wedges=[...armPairs,...legPairs].map(([a,b],i)=>{const dx=j[b][0]-j[a][0],dy=j[b][1]-j[a][1],len=Math.hypot(dx,dy),nx=-dy/len*2.8,ny=dx/len*2.8;return poly([[j[a][0]+nx,j[a][1]+ny],[j[b][0]+nx*.65,j[b][1]+ny*.65],[j[b][0]-nx,j[b][1]-ny],[j[a][0]-nx*.6,j[a][1]-ny*.6]],`wedge limb-wedge w${i}`)}).join('');
- const bridgman=`<g class="bridgman-layer">${poly([[j.chest[0]-11*angle.sx,j.chest[1]-11],[j.chest[0]+8*angle.sx,j.chest[1]-8],[j.chest[0]+10*angle.sx,j.chest[1]+9],[j.chest[0]-8*angle.sx,j.chest[1]+12]],'wedge major')}${poly([[j.pelvis[0]-9*angle.sx,j.pelvis[1]-6],[j.pelvis[0]+9*angle.sx,j.pelvis[1]-4],[j.pelvis[0]+5*angle.sx,j.pelvis[1]+8],[j.pelvis[0]-7*angle.sx,j.pelvis[1]+7]],'wedge major')}${wedges}${poly([[j.head[0]-5*angle.sx,j.head[1]-6],[j.head[0]+5*angle.sx,j.head[1]-5],[j.head[0]+4*angle.sx,j.head[1]+6],[j.head[0]-5*angle.sx,j.head[1]+5]],'wedge')}${line(j.shoulderL,j.shoulderR,'plane-line')}${line(j.hipL,j.hipR,'plane-line')}<path d="M ${j.chest[0]-10*angle.sx} ${j.chest[1]+2} L ${j.chest[0]+9*angle.sx} ${j.chest[1]-1}" class="plane-line"/><path d="M ${j.pelvis[0]-8*angle.sx} ${j.pelvis[1]+2} L ${j.pelvis[0]+8*angle.sx} ${j.pelvis[1]-1}" class="plane-line"/></g>`;
- let content=mode==='pose'?base:mode==='structure'?gesture+structure:mode==='animator'?gesture+animator:gesture+bridgman;
- if(overlay&&mode!=='pose')content=`<g opacity=".16">${base}</g>${content}`;
- return `<svg viewBox="0 0 100 100" class="figure-svg mode-${mode}" aria-label="${pose.label}, ${angle.label}, ${mode}"><rect width="100" height="100" class="paper-bg"/><line x1="13" y1="94" x2="87" y2="94" class="ground"/>${content}</svg>`;
+function setView(name){
+  const v=views[name]||views.three;
+  camera.position.set(...v);
+  controls.target.set(0,.91,0);
+  controls.update();
+  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
 }
-function render(){
- const pose=POSES[state.poseId], angle=ANGLES.find(a=>a.id===state.angleId), mode=MODES.find(m=>m.id===state.mode);
- document.querySelector('#pose-list').innerHTML=Object.entries(POSES).map(([id,p])=>`<button class="pose-button ${id===state.poseId?'active':''}" data-pose="${id}"><span>${p.label}</span><small>${id===state.poseId?'Selected':'Study'}</small></button>`).join('');
- document.querySelector('#instructor-note').textContent=pose.note;
- document.querySelector('#angle-grid').innerHTML=ANGLES.map(a=>`<button class="angle-card ${a.id===state.angleId?'selected':''}" data-angle="${a.id}"><div class="mini">${figureSvg(pose,a,'pose',false,true)}</div><span>${a.label}</span></button>`).join('');
- document.querySelector('#pose-title').textContent=pose.label;document.querySelector('#angle-title').textContent=`${angle.label} view`;
- document.querySelector('#mode-kicker').textContent=mode.kicker;document.querySelector('#mode-title').textContent=mode.label;document.querySelector('#mode-desc').textContent=mode.desc;
- document.querySelector('#figure-stage').innerHTML=figureSvg(pose,angle,state.mode,state.overlay);
- document.querySelector('#mode-list').innerHTML=MODES.map((m,i)=>`<button class="mode-button ${m.id===state.mode?'active':''}" data-mode="${m.id}"><span class="mode-index">0${i+1}</span><div><b>${m.label}</b><small>${m.kicker}</small></div></button>`).join('');
- document.querySelector('#angle-dots').innerHTML=ANGLES.map(a=>`<button data-angle="${a.id}" aria-label="${a.label}" class="${a.id===state.angleId?'current':''}"></button>`).join('');
- document.querySelector('#overlay-toggle').checked=state.overlay;
- document.querySelectorAll('[data-pose]').forEach(el=>el.onclick=()=>{state.poseId=el.dataset.pose;render()});
- document.querySelectorAll('[data-angle]').forEach(el=>el.onclick=()=>{state.angleId=el.dataset.angle;render()});
- document.querySelectorAll('[data-mode]').forEach(el=>el.onclick=()=>{state.mode=el.dataset.mode;render()});
+
+document.querySelectorAll('[data-view]').forEach(btn=>btn.onclick=()=>setView(btn.dataset.view));
+document.querySelector('#reset-camera').onclick=()=>setView('three');
+
+document.querySelectorAll('[data-display]').forEach(btn=>btn.onclick=()=>{
+  displayMode=btn.dataset.display;
+  document.querySelectorAll('[data-display]').forEach(b=>b.classList.toggle('active',b===btn));
+  if(!body) return;
+  const mat=displayMode==='clay'?clay:displayMode==='silhouette'?silhouette:wire;
+  body.traverse(o=>{if(o.isMesh)o.material=mat});
+});
+
+const guideToggle=document.querySelector('#guide-toggle');
+let guide=null;
+guideToggle.onchange=()=>{
+  if(guide){guide.remove();guide=null}
+  if(!guideToggle.checked)return;
+  guide=document.createElement('div');guide.className='head-guide';
+  const top=7,bottom=93,step=(bottom-top)/8;
+  for(let i=0;i<=8;i++){
+    const line=document.createElement('div'); line.style.top=`${top+i*step}%`; guide.appendChild(line);
+    if(i<8){const label=document.createElement('span');label.style.top=`${top+(i+.5)*step}%`;label.textContent=`${i+1}`;guide.appendChild(label)}
+  }
+  document.querySelector('.stage-card').appendChild(guide);
+};
+
+function resize(){
+  const w=stage.clientWidth,h=stage.clientHeight;
+  renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
 }
-document.querySelector('#overlay-toggle').addEventListener('change',e=>{state.overlay=e.target.checked;render()});
-document.querySelector('#rotate-left').onclick=()=>{const i=ANGLES.findIndex(a=>a.id===state.angleId);state.angleId=ANGLES[(i+ANGLES.length-1)%ANGLES.length].id;render()};
-document.querySelector('#rotate-right').onclick=()=>{const i=ANGLES.findIndex(a=>a.id===state.angleId);state.angleId=ANGLES[(i+1)%ANGLES.length].id;render()};
-render();
+window.addEventListener('resize',resize);resize();
+
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera)}animate();
