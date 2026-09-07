@@ -4,73 +4,98 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#d8d0c3" />
-  <title>Skem</title>
-  <meta name="description" content="Skem, an interactive figure drawing study prototype" />
+  <title>Skem · Simple Male Base</title>
+  <meta name="description" content="A simple male figure base prototype for Skem." />
   <link rel="stylesheet" href="/styles.css" />
+  <script type="importmap">
+    {"imports":{
+      "three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+      "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    }}
+  </script>
 </head>
 <body>
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">SKEM · PROTOTYPE 01</div>
-        <h1>Learn the figure by <em>seeing through it.</em></h1>
+        <div class="eyebrow">SKEM · MALE BASE 0.4</div>
+        <h1>Start with <em>the body.</em></h1>
+        <p>One neutral male figure. No lessons, no pose library, no anatomy overlays yet.</p>
       </div>
-      <div class="header-chip"><span class="dot"></span> Study session</div>
+      <div class="header-chip"><span class="dot"></span> body study</div>
     </header>
 
     <section class="workspace">
-      <aside class="left-panel panel">
-        <div class="panel-label">01 · CHOOSE A POSE</div>
-        <div id="pose-list" class="pose-list"></div>
-        <div class="note-card">
-          <span class="note-number">INSTRUCTOR NOTE</span>
-          <p id="instructor-note"></p>
+      <aside class="panel controls">
+        <div class="panel-label">01 · CAMERA</div>
+        <div class="button-grid" id="view-controls">
+          <button data-view="front">Front</button>
+          <button data-view="three" class="active">3/4</button>
+          <button data-view="side">Side</button>
+          <button data-view="back">Back</button>
         </div>
-        <div class="panel-label second">02 · VIEW ANGLE</div>
-        <div id="angle-grid" class="angle-grid"></div>
+
+        <div class="panel-label section-label">02 · DISPLAY</div>
+        <div class="display-list" id="display-controls">
+          <button data-display="clay" class="active"><b>Clay</b><small>Read the surface</small></button>
+          <button data-display="silhouette"><b>Silhouette</b><small>Judge proportion</small></button>
+          <button data-display="wire"><b>Wireframe</b><small>See the base mesh</small></button>
+        </div>
+
+        <label class="toggle-row">
+          <span><b>8-head guide</b><small>Basic figure proportion check</small></span>
+          <input id="guide-toggle" type="checkbox" />
+          <i></i>
+        </label>
       </aside>
 
       <section class="stage-wrap">
         <div class="stage-meta">
-          <div><span id="pose-title"></span><small id="angle-title"></small></div>
-          <div class="mode-pill" id="mode-kicker"></div>
+          <div>
+            <span>Neutral male base</span>
+            <small>approx. 1.78 m · neutral A-pose</small>
+          </div>
+          <div class="status-pill">MODEL FIRST</div>
         </div>
+
         <div class="stage-card">
-          <div id="figure-stage" class="figure-stage"></div>
-          <div class="stage-caption"><b id="mode-title"></b><span id="mode-desc"></span></div>
+          <div id="three-stage"></div>
+          <div class="hud top-left">
+            <span>GOAL</span>
+            <strong>Believable simple human</strong>
+            <small>Judge the body before we build Skem around it.</small>
+          </div>
+          <div class="hud bottom-left">
+            <span>CONTROLS</span>
+            <strong>Drag to rotate</strong>
+            <small>Scroll to zoom · right-drag to pan</small>
+          </div>
         </div>
-        <div class="angle-strip">
-          <button id="rotate-left">← Rotate</button>
-          <div id="angle-dots"></div>
-          <button id="rotate-right">Rotate →</button>
+
+        <div class="stage-actions">
+          <button id="reset-camera">Reset camera</button>
         </div>
       </section>
 
-      <aside class="right-panel panel">
-        <div class="panel-label">03 · DRAWING PHASE</div>
-        <div id="mode-list" class="mode-list"></div>
-        <label class="toggle-row">
-          <div><b>Reference ghost</b><small>Keep the finished pose faintly visible</small></div>
-          <input id="overlay-toggle" type="checkbox" checked />
-          <span class="toggle"></span>
-        </label>
-        <div class="study-flow">
-          <span class="panel-label">SUGGESTED STUDY</span>
-          <ol>
-            <li><b>30 sec</b> Find the action</li>
-            <li><b>2 min</b> Build volumes</li>
-            <li><b>5 min</b> Connect masses</li>
-            <li><b>10 min</b> Draw from reference</li>
-          </ol>
+      <aside class="panel notes-panel">
+        <div class="panel-label">BODY TARGET</div>
+        <h2>A simple game-style base figure</h2>
+        <p>For this pass, the body only needs to establish a credible human silhouette and usable proportions.</p>
+        <ul>
+          <li>Male shoulder-to-waist taper</li>
+          <li>Readable rib cage and pelvis regions</li>
+          <li>Natural arm and leg lengths</li>
+          <li>Simple head, hands, and feet</li>
+          <li>No genital detail</li>
+          <li>Clean enough to draw from</li>
+        </ul>
+        <div class="next-card">
+          <span>NEXT, ONLY AFTER THE BODY WORKS</span>
+          <p>Rigging → posing → anatomy landmarks → construction layers.</p>
         </div>
       </aside>
     </section>
-
-    <footer>
-      <span>Prototype focus: pose × angle × construction method</span>
-      <span>Next: true 3D rotation · anatomy layers · custom poses · timed sessions</span>
-    </footer>
   </main>
-  <script src="/app.js"></script>
+  <script type="module" src="/app.js"></script>
 </body>
 </html>
