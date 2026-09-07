@@ -73,10 +73,10 @@ const DEFINITIONS = {
     defaults: { width: 0.72, height: 0.72, depth: 0.72, top: 1, middle: 1, bottom: 1, taper: 0, bulge: 0, squash: 0, bow: 0, shear: 0 }
   },
   hand: {
-    label: 'Hand Block',
-    desc: 'small wedge / palm mass',
-    rule: 'A directional block that can later accept finger wedges',
-    defaults: { width: 0.65, height: 0.9, depth: 0.42, top: 0.82, middle: 0.92, bottom: 0.62, taper: 0.18, bulge: 0, squash: 0, bow: 0, shear: 0.08 }
+    label: 'Hand Cluster',
+    desc: 'palm wedge + finger prisms',
+    rule: 'A narrow palm wedge, four thin finger prisms, and a short thumb wedge.',
+    defaults: { width: 0.72, height: 1.0, depth: 0.42, top: 0.78, middle: 0.9, bottom: 0.62, taper: 0.18, bulge: 0, squash: 0, bow: 0, shear: 0.04 }
   },
   foot: {
     label: 'Foot Wedge',
@@ -92,12 +92,11 @@ const DEFINITIONS = {
   }
 };
 
-let formType = 'torso';
+let formType = 'hand';
 let params = { ...DEFINITIONS[formType].defaults };
 let root = new THREE.Group();
 scene.add(root);
-let mesh = null;
-let edgeLines = null;
+let formObject = null;
 let axisGroup = null;
 let contourGroup = null;
 
@@ -192,19 +191,6 @@ function jointGeometry() {
   return g;
 }
 
-function handGeometry() {
-  const p = params;
-  return frustumGeometry({
-    topW: p.width * p.top,
-    bottomW: p.width * p.bottom,
-    topD: p.depth * 0.92,
-    bottomD: p.depth * 0.72,
-    height: p.height,
-    topShiftX: p.shear * 0.25,
-    topShiftZ: p.taper * 0.12
-  });
-}
-
 function footGeometry() {
   const p = params;
   const g = frustumGeometry({
@@ -226,17 +212,99 @@ function neckGeometry() {
   return new THREE.CylinderGeometry(p.width * 0.45 * p.top, p.width * 0.5 * p.bottom, p.height, 8, 1, false);
 }
 
-function currentGeometry() {
+function addMeshWithEdges(group, geometry, position = [0,0,0], rotation = [0,0,0]) {
+  const mesh = new THREE.Mesh(geometry, faceMaterial);
+  mesh.position.set(...position);
+  mesh.rotation.set(...rotation);
+  mesh.userData.role = 'face';
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 20), edgeMaterial);
+  edges.userData.role = 'edge';
+  mesh.add(edges);
+  group.add(mesh);
+  return mesh;
+}
+
+function createSingleFormObject(geometry) {
+  const group = new THREE.Group();
+  addMeshWithEdges(group, geometry);
+  return group;
+}
+
+function createHandClusterObject() {
+  const p = params;
+  const group = new THREE.Group();
+
+  const palm = frustumGeometry({
+    topW: 0.22,
+    bottomW: 0.34,
+    topD: 0.14,
+    bottomD: 0.18,
+    height: 0.42,
+    topShiftX: 0.01,
+    topShiftZ: 0.0,
+    frontSlope: 0.02
+  });
+  addMeshWithEdges(group, palm, [0, -0.03, 0], [0, 0, 0]);
+
+  const fingerLengths = [0.24, 0.29, 0.26, 0.20];
+  const fingerXs = [-0.10, -0.03, 0.04, 0.11];
+  const fingerRots = [-0.05, -0.02, 0.02, 0.06];
+  const fingerSpread = p.shear * 0.3;
+  const tipNarrow = 0.58 - p.taper * 0.12;
+  fingerLengths.forEach((len, i) => {
+    const geo = frustumGeometry({
+      topW: 0.055,
+      bottomW: 0.035 * tipNarrow,
+      topD: 0.050,
+      bottomD: 0.038,
+      height: len,
+      topShiftX: 0.0,
+      topShiftZ: 0.0
+    });
+    addMeshWithEdges(group, geo, [fingerXs[i] + fingerSpread * (i - 1.5) * 0.1, -0.34 - len * 0.34, 0], [0, 0, fingerRots[i]]);
+  });
+
+  const thumb = frustumGeometry({
+    topW: 0.07,
+    bottomW: 0.045,
+    topD: 0.06,
+    bottomD: 0.045,
+    height: 0.18,
+    topShiftX: 0.008,
+    topShiftZ: 0.0
+  });
+  addMeshWithEdges(group, thumb, [0.17, -0.08, 0], [0.15, 0.05, -0.82]);
+
+  const wrist = frustumGeometry({
+    topW: 0.09,
+    bottomW: 0.08,
+    topD: 0.09,
+    bottomD: 0.08,
+    height: 0.12,
+    topShiftX: 0,
+    topShiftZ: 0
+  });
+  addMeshWithEdges(group, wrist, [0, 0.24, 0], [0, 0, 0]);
+
+  const sx = p.width / 0.72;
+  const sy = p.height / 1.0;
+  const sz = p.depth / 0.42;
+  group.scale.set(sx, sy * (1 - p.squash * 0.12), sz);
+  group.rotation.z = p.bow * 0.12;
+  return group;
+}
+
+function currentFormObject() {
   switch (formType) {
-    case 'head': return headGeometry();
-    case 'torso': return torsoGeometry();
-    case 'pelvis': return pelvisGeometry();
-    case 'limb': return limbGeometry();
-    case 'joint': return jointGeometry();
-    case 'hand': return handGeometry();
-    case 'foot': return footGeometry();
-    case 'neck': return neckGeometry();
-    default: return torsoGeometry();
+    case 'head': return createSingleFormObject(headGeometry());
+    case 'torso': return createSingleFormObject(torsoGeometry());
+    case 'pelvis': return createSingleFormObject(pelvisGeometry());
+    case 'limb': return createSingleFormObject(limbGeometry());
+    case 'joint': return createSingleFormObject(jointGeometry());
+    case 'hand': return createHandClusterObject();
+    case 'foot': return createSingleFormObject(footGeometry());
+    case 'neck': return createSingleFormObject(neckGeometry());
+    default: return createSingleFormObject(torsoGeometry());
   }
 }
 
@@ -257,7 +325,6 @@ function buildGuides() {
       : [new THREE.Vector3(0, 0, -span * 0.62), new THREE.Vector3(0, 0, span * 0.62)]),
     guideMaterial
   ));
-
   axisGroup.add(new THREE.Line(
     new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0, Math.max(params.depth, 0.5) * 0.75)]),
     guideMaterial
@@ -267,14 +334,36 @@ function buildGuides() {
     const r = params.width * 0.5;
     for (const axis of ['y','x']) {
       const pts = [];
-      for (let i=0;i<48;i++) {
-        const a = i/48*Math.PI*2;
+      for (let i = 0; i < 48; i++) {
+        const a = i / 48 * Math.PI * 2;
         pts.push(axis === 'y'
-          ? new THREE.Vector3(Math.cos(a)*r, 0, Math.sin(a)*params.depth*0.5)
-          : new THREE.Vector3(0, Math.cos(a)*params.height*0.5, Math.sin(a)*params.depth*0.5));
+          ? new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * params.depth * 0.5)
+          : new THREE.Vector3(0, Math.cos(a) * params.height * 0.5, Math.sin(a) * params.depth * 0.5));
       }
       addLineLoop(pts, contourMaterial, contourGroup);
     }
+    return;
+  }
+
+  if (formType === 'hand') {
+    const palmW = params.width * 0.24;
+    const palmD = params.depth * 0.32;
+    const palmY = -params.height * 0.05;
+    const palmLoop = [
+      new THREE.Vector3(-palmW, palmY + params.height * 0.18, -palmD),
+      new THREE.Vector3(palmW, palmY + params.height * 0.18, -palmD),
+      new THREE.Vector3(palmW * 1.35, palmY - params.height * 0.18, palmD),
+      new THREE.Vector3(-palmW * 1.35, palmY - params.height * 0.18, palmD)
+    ];
+    addLineLoop(palmLoop, contourMaterial, contourGroup);
+
+    const fingerLoop = [
+      new THREE.Vector3(-params.width * 0.18, -params.height * 0.32, -params.depth * 0.12),
+      new THREE.Vector3(params.width * 0.18, -params.height * 0.32, -params.depth * 0.12),
+      new THREE.Vector3(params.width * 0.12, -params.height * 0.62, params.depth * 0.08),
+      new THREE.Vector3(-params.width * 0.12, -params.height * 0.62, params.depth * 0.08)
+    ];
+    addLineLoop(fingerLoop, contourMaterial, contourGroup);
     return;
   }
 
@@ -294,10 +383,10 @@ function buildGuides() {
       const k = THREE.MathUtils.lerp(params.bottom, params.top, t + 0.5);
       const rx = params.width * 0.5 * k;
       const rz = params.depth * 0.5 * k;
-      const pts=[];
-      for(let i=0;i<6;i++){
-        const a=i/6*Math.PI*2;
-        pts.push(new THREE.Vector3(Math.cos(a)*rx,y,Math.sin(a)*rz));
+      const pts = [];
+      for (let i = 0; i < 6; i++) {
+        const a = i / 6 * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * rx, y, Math.sin(a) * rz));
       }
       addLineLoop(pts, contourMaterial, contourGroup);
     } else {
@@ -305,7 +394,10 @@ function buildGuides() {
       const mix = t + 0.5;
       const w = params.width * THREE.MathUtils.lerp(params.bottom, params.top, mix) * 0.5;
       const d = params.depth * THREE.MathUtils.lerp(0.78, 1.0, mix) * 0.5;
-      const pts=[new THREE.Vector3(-w,y,-d),new THREE.Vector3(w,y,-d),new THREE.Vector3(w,y,d),new THREE.Vector3(-w,y,d)];
+      const pts = [
+        new THREE.Vector3(-w,y,-d), new THREE.Vector3(w,y,-d),
+        new THREE.Vector3(w,y,d), new THREE.Vector3(-w,y,d)
+      ];
       addLineLoop(pts, contourMaterial, contourGroup);
     }
   }
@@ -313,13 +405,8 @@ function buildGuides() {
 
 function rebuild() {
   while (root.children.length) root.remove(root.children[0]);
-  const geometry = currentGeometry();
-  mesh = new THREE.Mesh(geometry, faceMaterial);
-  root.add(mesh);
-
-  edgeLines = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 20), edgeMaterial);
-  root.add(edgeLines);
-
+  formObject = currentFormObject();
+  root.add(formObject);
   buildGuides();
   updateDisplay();
   updateReadout();
@@ -328,8 +415,16 @@ function rebuild() {
 function updateDisplay() {
   const silhouette = document.querySelector('#silhouette-toggle').checked;
   const wire = document.querySelector('#wire-toggle').checked;
-  mesh.material = silhouette ? silhouetteMaterial : wire ? wireMaterial : faceMaterial;
-  edgeLines.visible = !silhouette && !wire;
+
+  formObject.traverse(obj => {
+    if (obj.isMesh) {
+      obj.material = silhouette ? silhouetteMaterial : wire ? wireMaterial : faceMaterial;
+    }
+    if (obj.userData.role === 'edge') {
+      obj.visible = !silhouette && !wire;
+    }
+  });
+
   axisGroup.visible = document.querySelector('#axis-toggle').checked && !silhouette;
   contourGroup.visible = document.querySelector('#contour-toggle').checked && !silhouette;
 }
@@ -351,7 +446,7 @@ function addRange(container, key, label, min, max, step, help) {
 function renderControls() {
   const f = document.querySelector('#form-list');
   f.innerHTML = '';
-  Object.entries(DEFINITIONS).forEach(([id,d]) => {
+  Object.entries(DEFINITIONS).forEach(([id, d]) => {
     const b = document.createElement('button');
     b.className = 'form-button' + (id === formType ? ' active' : '');
     b.innerHTML = `<b>${d.label}</b><small>${d.desc}</small>`;
@@ -371,29 +466,29 @@ function renderControls() {
 
   const p = document.querySelector('#proportion-controls');
   p.innerHTML = '';
-  addRange(p,'width','Width',0.3,2.8,0.02,'side-to-side size');
-  addRange(p,'height','Height',0.3,3.6,0.02,'vertical size');
-  addRange(p,'depth','Depth',0.25,2.4,0.02,'front-to-back size');
+  addRange(p, 'width', 'Width', 0.3, 2.8, 0.02, 'side-to-side size');
+  addRange(p, 'height', 'Height', 0.3, 3.6, 0.02, 'vertical size');
+  addRange(p, 'depth', 'Depth', 0.25, 2.4, 0.02, 'front-to-back size');
 
   const pr = document.querySelector('#profile-controls');
   pr.innerHTML = '';
-  addRange(pr,'top','Top size',0.35,1.4,0.01,'relative size at one end');
-  addRange(pr,'middle','Middle size',0.45,1.5,0.01,'kept for shared form vocabulary');
-  addRange(pr,'bottom','Bottom size',0.25,1.35,0.01,'relative size at the other end');
+  addRange(pr, 'top', 'Top size', 0.35, 1.4, 0.01, 'relative size at one end');
+  addRange(pr, 'middle', 'Middle size', 0.45, 1.5, 0.01, 'kept for shared form vocabulary');
+  addRange(pr, 'bottom', 'Bottom size', 0.25, 1.35, 0.01, 'relative size at the other end');
 
   const c = document.querySelector('#character-controls');
   c.innerHTML = '';
-  addRange(c,'taper','Taper',0,0.65,0.01,'changes directional narrowing');
-  addRange(c,'bulge','Bulge',-0.2,0.45,0.01,'reserved for later organic variants');
-  addRange(c,'squash','Squash',-0.4,0.5,0.01,'compresses the main axis');
-  addRange(c,'bow','Bow',-0.4,0.4,0.01,'subtle limb curve / torso shift');
-  addRange(c,'shear','Shear',-0.5,0.5,0.01,'offsets one end from the other');
+  addRange(c, 'taper', 'Taper', 0, 0.65, 0.01, 'changes directional narrowing');
+  addRange(c, 'bulge', 'Bulge', -0.2, 0.45, 0.01, 'reserved for later organic variants');
+  addRange(c, 'squash', 'Squash', -0.4, 0.5, 0.01, 'compresses the main axis');
+  addRange(c, 'bow', 'Bow', -0.4, 0.4, 0.01, 'subtle limb curve / torso shift');
+  addRange(c, 'shear', 'Shear', -0.5, 0.5, 0.01, 'offsets one end from the other');
 }
 
 function updateReadout() {
   document.querySelector('#value-readout').textContent = JSON.stringify({
     form: formType,
-    ...Object.fromEntries(Object.entries(params).map(([k,v]) => [k, Number(v.toFixed(2))]))
+    ...Object.fromEntries(Object.entries(params).map(([k, v]) => [k, Number(v.toFixed(2))]))
   }, null, 2);
 }
 
@@ -406,8 +501,8 @@ function updateReadout() {
 });
 
 document.querySelector('#reset-view').onclick = () => {
-  camera.position.set(4.3,3.0,5.1);
-  controls.target.set(0,0,0);
+  camera.position.set(4.3, 3.0, 5.1);
+  controls.target.set(0, 0, 0);
   controls.update();
 };
 document.querySelector('#reset-form').onclick = () => {
