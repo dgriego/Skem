@@ -79,9 +79,9 @@ const DEFINITIONS = {
     defaults: { width: 0.72, height: 1.0, depth: 0.42, top: 0.78, middle: 0.9, bottom: 0.62, taper: 0.18, bulge: 0, squash: 0, bow: 0, shear: 0.04 }
   },
   foot: {
-    label: 'Foot Wedge',
-    desc: 'low directional wedge',
-    rule: 'Low heel-to-toe wedge with a clear top plane',
+    label: 'Foot Construction',
+    desc: 'heel wedge + toe block',
+    rule: 'A low shoe-like foot made from a rear wedge, a front toe block, and a simple ankle cuff.',
     defaults: { width: 0.72, height: 0.48, depth: 1.7, top: 0.72, middle: 0.9, bottom: 1.08, taper: 0.2, bulge: 0, squash: 0.05, bow: 0, shear: 0.08 }
   },
   neck: {
@@ -207,6 +207,54 @@ function footGeometry() {
   return g;
 }
 
+function createFootClusterObject() {
+  const p = params;
+  const group = new THREE.Group();
+
+  const rear = frustumGeometry({
+    topW: 0.34,
+    bottomW: 0.40,
+    topD: 0.34,
+    bottomD: 0.30,
+    height: 0.78,
+    topShiftX: -0.01,
+    topShiftZ: -0.02,
+    frontSlope: 0.03
+  });
+  addMeshWithEdges(group, rear, [-0.02, -0.03, -0.06], [Math.PI / 2, 0.0, 0.03]);
+
+  const toe = frustumGeometry({
+    topW: 0.28,
+    bottomW: 0.38,
+    topD: 0.24,
+    bottomD: 0.30,
+    height: 0.84,
+    topShiftX: 0.0,
+    topShiftZ: 0.05,
+    frontSlope: 0.05
+  });
+  addMeshWithEdges(group, toe, [0.00, -0.08, 0.60], [Math.PI / 2, 0.0, 0.0]);
+
+  const ankle = frustumGeometry({
+    topW: 0.18,
+    bottomW: 0.24,
+    topD: 0.17,
+    bottomD: 0.20,
+    height: 0.18,
+    topShiftX: 0.0,
+    topShiftZ: 0.0
+  });
+  addMeshWithEdges(group, ankle, [0.0, 0.22, -0.14], [0, 0, 0]);
+
+  const sx = p.width / 0.72;
+  const sy = p.height / 0.48;
+  const sz = p.depth / 1.7;
+  group.scale.set(sx, sy * (1 - p.squash * 0.1), sz);
+  group.rotation.z = p.bow * 0.08;
+  group.rotation.y = p.shear * 0.12;
+  return group;
+}
+
 function neckGeometry() {
   const p = params;
   return new THREE.CylinderGeometry(p.width * 0.45 * p.top, p.width * 0.5 * p.bottom, p.height, 8, 1, false);
@@ -302,7 +350,7 @@ function currentFormObject() {
     case 'limb': return createSingleFormObject(limbGeometry());
     case 'joint': return createSingleFormObject(jointGeometry());
     case 'hand': return createHandClusterObject();
-    case 'foot': return createSingleFormObject(footGeometry());
+    case 'foot': return createFootClusterObject();
     case 'neck': return createSingleFormObject(neckGeometry());
     default: return createSingleFormObject(torsoGeometry());
   }
