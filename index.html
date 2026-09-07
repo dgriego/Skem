@@ -3,74 +3,88 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#d8d0c3" />
-  <title>Skem</title>
-  <meta name="description" content="Skem, an interactive figure drawing study prototype" />
+  <title>Skem · Form Lab</title>
+  <meta name="description" content="Skem Form Lab — design the basic 3D forms used to teach figure construction." />
   <link rel="stylesheet" href="/styles.css" />
+  <script type="importmap">
+    {"imports":{
+      "three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+      "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    }}
+  </script>
 </head>
 <body>
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">SKEM · PROTOTYPE 01</div>
-        <h1>Learn the figure by <em>seeing through it.</em></h1>
+        <div class="eyebrow">SKEM · FORM LAB 0.1</div>
+        <h1>Define the <em>visual alphabet.</em></h1>
+        <p>Design one drawable 3D form at a time before assembling the human figure.</p>
       </div>
-      <div class="header-chip"><span class="dot"></span> Study session</div>
+      <div class="header-chip"><span></span> geometry playground</div>
     </header>
 
     <section class="workspace">
-      <aside class="left-panel panel">
-        <div class="panel-label">01 · CHOOSE A POSE</div>
-        <div id="pose-list" class="pose-list"></div>
-        <div class="note-card">
-          <span class="note-number">INSTRUCTOR NOTE</span>
-          <p id="instructor-note"></p>
-        </div>
-        <div class="panel-label second">02 · VIEW ANGLE</div>
-        <div id="angle-grid" class="angle-grid"></div>
+      <aside class="panel left-panel">
+        <div class="panel-label">01 · FORM</div>
+        <div id="form-list" class="form-list"></div>
+
+        <div class="panel-label section-label">02 · PROPORTION</div>
+        <div id="proportion-controls" class="control-stack"></div>
+
+        <div class="panel-label section-label">03 · PROFILE</div>
+        <div id="profile-controls" class="control-stack"></div>
       </aside>
 
       <section class="stage-wrap">
         <div class="stage-meta">
-          <div><span id="pose-title"></span><small id="angle-title"></small></div>
-          <div class="mode-pill" id="mode-kicker"></div>
+          <div>
+            <span id="form-title">Barrel</span>
+            <small id="form-desc">large organic mass</small>
+          </div>
+          <div class="status-pill">DRAWABLE FIRST</div>
         </div>
+
         <div class="stage-card">
-          <div id="figure-stage" class="figure-stage"></div>
-          <div class="stage-caption"><b id="mode-title"></b><span id="mode-desc"></span></div>
+          <div id="three-stage"></div>
+          <div class="hud top-left">
+            <span>FORM RULE</span>
+            <strong id="hud-rule">Simple enough to sketch quickly</strong>
+            <small id="hud-note">Complexity should come from proportion and orientation, not detail.</small>
+          </div>
+          <div class="hud bottom-left">
+            <span>CONTROLS</span>
+            <strong>Drag to orbit</strong>
+            <small>Scroll to zoom · right-drag to pan</small>
+          </div>
         </div>
-        <div class="angle-strip">
-          <button id="rotate-left">← Rotate</button>
-          <div id="angle-dots"></div>
-          <button id="rotate-right">Rotate →</button>
+
+        <div class="stage-actions">
+          <button id="reset-view">Reset camera</button>
+          <button id="reset-form">Reset form</button>
+          <button id="copy-values">Copy values</button>
         </div>
       </section>
 
-      <aside class="right-panel panel">
-        <div class="panel-label">03 · DRAWING PHASE</div>
-        <div id="mode-list" class="mode-list"></div>
-        <label class="toggle-row">
-          <div><b>Reference ghost</b><small>Keep the finished pose faintly visible</small></div>
-          <input id="overlay-toggle" type="checkbox" checked />
-          <span class="toggle"></span>
-        </label>
-        <div class="study-flow">
-          <span class="panel-label">SUGGESTED STUDY</span>
-          <ol>
-            <li><b>30 sec</b> Find the action</li>
-            <li><b>2 min</b> Build volumes</li>
-            <li><b>5 min</b> Connect masses</li>
-            <li><b>10 min</b> Draw from reference</li>
-          </ol>
+      <aside class="panel right-panel">
+        <div class="panel-label">04 · CHARACTER</div>
+        <div id="character-controls" class="control-stack"></div>
+
+        <div class="panel-label section-label">05 · DRAWING GUIDES</div>
+        <div class="toggle-stack">
+          <label><span><b>Center axis</b><small>Primary orientation line</small></span><input type="checkbox" id="axis-toggle" checked><i></i></label>
+          <label><span><b>Cross-contours</b><small>Show the turn of the form</small></span><input type="checkbox" id="contour-toggle" checked><i></i></label>
+          <label><span><b>Wireframe</b><small>Expose polygon structure</small></span><input type="checkbox" id="wire-toggle"><i></i></label>
+          <label><span><b>Silhouette</b><small>Judge only the outer shape</small></span><input type="checkbox" id="silhouette-toggle"><i></i></label>
+        </div>
+
+        <div class="readout-card">
+          <span class="panel-label">CURRENT FORM</span>
+          <pre id="value-readout"></pre>
         </div>
       </aside>
     </section>
-
-    <footer>
-      <span>Prototype focus: pose × angle × construction method</span>
-      <span>Next: true 3D rotation · anatomy layers · custom poses · timed sessions</span>
-    </footer>
   </main>
-  <script src="/app.js"></script>
+  <script type="module" src="/app.js"></script>
 </body>
 </html>
