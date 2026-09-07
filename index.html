@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#d8d0c3" />
-  <title>Skem · Simple Male Base</title>
-  <meta name="description" content="A simple male figure base prototype for Skem." />
+  <title>Skem · Basic Forms Figure</title>
+  <meta name="description" content="A figure drawing mannequin built from simple 3D forms." />
   <link rel="stylesheet" href="/styles.css" />
   <script type="importmap">
     {"imports":{
@@ -18,16 +18,23 @@
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">SKEM · MALE BASE 0.4</div>
-        <h1>Start with <em>the body.</em></h1>
-        <p>One neutral male figure. No lessons, no pose library, no anatomy overlays yet.</p>
+        <div class="eyebrow">SKEM · BASIC FORMS 0.5</div>
+        <h1>Build the figure <em>as forms.</em></h1>
+        <p>Head, rib cage, pelvis, joints, and tapered limbs. Nothing more yet.</p>
       </div>
-      <div class="header-chip"><span class="dot"></span> body study</div>
+      <div class="header-chip"><span class="dot"></span> construction mannequin</div>
     </header>
 
     <section class="workspace">
       <aside class="panel controls">
-        <div class="panel-label">01 · CAMERA</div>
+        <div class="panel-label">01 · POSE</div>
+        <div class="display-list" id="pose-controls">
+          <button data-pose="neutral" class="active"><b>Neutral</b><small>check proportions</small></button>
+          <button data-pose="contrapposto"><b>Contrapposto</b><small>oppose torso + pelvis</small></button>
+          <button data-pose="reach"><b>Reach</b><small>test direction + foreshortening</small></button>
+        </div>
+
+        <div class="panel-label section-label">02 · CAMERA</div>
         <div class="button-grid" id="view-controls">
           <button data-view="front">Front</button>
           <button data-view="three" class="active">3/4</button>
@@ -35,15 +42,20 @@
           <button data-view="back">Back</button>
         </div>
 
-        <div class="panel-label section-label">02 · DISPLAY</div>
+        <div class="panel-label section-label">03 · DISPLAY</div>
         <div class="display-list" id="display-controls">
-          <button data-display="clay" class="active"><b>Clay</b><small>Read the surface</small></button>
-          <button data-display="silhouette"><b>Silhouette</b><small>Judge proportion</small></button>
-          <button data-display="wire"><b>Wireframe</b><small>See the base mesh</small></button>
+          <button data-display="forms" class="active"><b>Forms</b><small>read volume</small></button>
+          <button data-display="silhouette"><b>Silhouette</b><small>judge proportion</small></button>
+          <button data-display="wire"><b>Wireframe</b><small>see primitive structure</small></button>
         </div>
 
         <label class="toggle-row">
-          <span><b>8-head guide</b><small>Basic figure proportion check</small></span>
+          <span><b>Cross-contours</b><small>show how each mass turns in space</small></span>
+          <input id="contour-toggle" type="checkbox" checked />
+          <i></i>
+        </label>
+        <label class="toggle-row compact">
+          <span><b>8-head guide</b><small>basic male proportion check</small></span>
           <input id="guide-toggle" type="checkbox" />
           <i></i>
         </label>
@@ -51,19 +63,15 @@
 
       <section class="stage-wrap">
         <div class="stage-meta">
-          <div>
-            <span>Neutral male base</span>
-            <small>approx. 1.78 m · neutral A-pose</small>
-          </div>
-          <div class="status-pill">MODEL FIRST</div>
+          <div><span id="pose-title">Neutral construction</span><small>primitive-form figure · free orbit</small></div>
+          <div class="status-pill">DRAWING FIRST</div>
         </div>
-
         <div class="stage-card">
           <div id="three-stage"></div>
           <div class="hud top-left">
-            <span>GOAL</span>
-            <strong>Believable simple human</strong>
-            <small>Judge the body before we build Skem around it.</small>
+            <span>3 MAIN MASSES</span>
+            <strong>Head · rib cage · pelvis</strong>
+            <small>Compare their tilt, turn, and distance before studying the limbs.</small>
           </div>
           <div class="hud bottom-left">
             <span>CONTROLS</span>
@@ -71,27 +79,22 @@
             <small>Scroll to zoom · right-drag to pan</small>
           </div>
         </div>
-
-        <div class="stage-actions">
-          <button id="reset-camera">Reset camera</button>
-        </div>
+        <div class="stage-actions"><button id="reset-camera">Reset camera</button></div>
       </section>
 
       <aside class="panel notes-panel">
-        <div class="panel-label">BODY TARGET</div>
-        <h2>A simple game-style base figure</h2>
-        <p>For this pass, the body only needs to establish a credible human silhouette and usable proportions.</p>
-        <ul>
-          <li>Male shoulder-to-waist taper</li>
-          <li>Readable rib cage and pelvis regions</li>
-          <li>Natural arm and leg lengths</li>
-          <li>Simple head, hands, and feet</li>
-          <li>No genital detail</li>
-          <li>Clean enough to draw from</li>
-        </ul>
+        <div class="panel-label">CONSTRUCTION LOGIC</div>
+        <h2>Think in volumes, not outlines.</h2>
+        <ol class="logic-list">
+          <li><b>1</b><span><strong>Head</strong><small>Ovoid with center lines</small></span></li>
+          <li><b>2</b><span><strong>Rib cage</strong><small>Barrel / egg mass</small></span></li>
+          <li><b>3</b><span><strong>Pelvis</strong><small>Blocky underwear-shaped mass</small></span></li>
+          <li><b>4</b><span><strong>Joints</strong><small>Spheres at shoulders, elbows, knees, ankles</small></span></li>
+          <li><b>5</b><span><strong>Limbs</strong><small>Tapered cylinders that point through space</small></span></li>
+        </ol>
         <div class="next-card">
-          <span>NEXT, ONLY AFTER THE BODY WORKS</span>
-          <p>Rigging → posing → anatomy landmarks → construction layers.</p>
+          <span>THE TEST</span>
+          <p>If this figure is useful, we can later layer more organic anatomy over these exact same forms.</p>
         </div>
       </aside>
     </section>
